@@ -32,8 +32,8 @@ if mod(N,2)==1
         end
     end
 end        
-IDFnT0=conj(DFnT0);
-IDFnT1=conj(DFnT1);
+IDFnT0=DFnT0';
+IDFnT1=DFnT1';
 %% IDFnT 
 Symbols=zeros(1,N,Block_Num);
 Block=1;
