@@ -1,4 +1,4 @@
-function [H0,Symbols0]=Channel(Trans_Symbols,L,N,Block_Num,SNR)
+function [H0,Symbols1]=Channel(Symbols0,L,N,Block_Num,SNR)
 P=N+L;
 %% Construct Channel Matrix
 h=(1/sqrt(2*L))*(randn(1,L)+1i*randn(1,L));
@@ -26,14 +26,14 @@ nr=randn(P,1,Block_Num);
 ni=randn(P,1,Block_Num);
 Noise=(sqrt(2)/2)*(nr+1i*ni);
 
-Symbols0=zeros(P,1,Block_Num);
+Symbols1=zeros(P,1,Block_Num);
 for a=1:Block_Num
-    Insertion1=Trans_Symbols(:,:,a);
+    Insertion1=Symbols0(:,:,a);
     if a==1
         Insertion2=zeros(P,1);
     else
-        Insertion2=Trans_Symbols(:,:,a-1);
+        Insertion2=Symbols0(:,:,a-1);
     end
-    Symbols0(:,:,a)=H0*Insertion1+H1*Insertion2+(1/sqrt(SNR))*Noise(:,:,a);
+    Symbols1(:,:,a)=H0*Insertion1+H1*Insertion2+(1/sqrt(SNR))*Noise(:,:,a);
 end
 end

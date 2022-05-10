@@ -1,4 +1,4 @@
-function [Bits,Trans_Symbols]=Transmitter(M,Block_Num,N,C)
+function [Bits,Symbols0]=Transmitter(M,Block_Num,N,C)
 P=N+C;
 %% Initalize Symbols, Unit Power
 Bits=randi(0:1,[1,N*Block_Num*log2(M)]);
@@ -40,22 +40,22 @@ Symbols=zeros(N,1,Block_Num);
 Block=1;
 if mod(N,2)==0
     for k=1:N:length(Bits3)
-        Symbols(:,:,Block)=IDFnT0*Bits(k:k+N-1).';
+        Symbols(:,:,Block)=IDFnT0*Bits3(k:k+N-1).';
         Block=Block+1;
     end
 end
 if mod(N,2)==1
     for k=1:N:length(Bits3)
-        Symbols(:,:,Block)=IDFnT1*Bits(k:k+N-1).';
+        Symbols(:,:,Block)=IDFnT1*Bits3(k:k+N-1).';
         Block=Block+1;
     end
 end
 %% Cyclic Prefix 
 S=eye(N);
 T=[S(2*N-P+1:N,:);S];
-Trans_Symbols=zeros(P,1,Block_Num);
+Symbols0=zeros(P,1,Block_Num);
 for a=1:Block_Num
-    Trans_Symbols(:,:,a)=T*Symbols(:,:,a);
+    Symbols0(:,:,a)=T*Symbols(:,:,a);
 end
 end
 

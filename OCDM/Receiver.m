@@ -1,11 +1,11 @@
-function Bitsre=Receiver(M,Block_Num,N,C,Equal,Symbols0,H0,SNR)
+function Bitsre=Receiver(M,Block_Num,N,C,Equal,Symbols1,H0,SNR)
 %1=ZF, 2=MMSE
 P=N+C;
 R=[zeros(N,P-N),eye(N)];
 Symbols2=zeros(N,1,Block_Num);
 %% Remove Cyclic Prefix 
 for a=1:Block_Num
-    Symbols2(:,:,a)=R*Symbols0(:,:,a);
+    Symbols2(:,:,a)=R*Symbols1(:,:,a);
 end
 %% Construct and Apply DFT matrix 
 IFFT=zeros(N);
