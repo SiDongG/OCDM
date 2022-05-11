@@ -31,9 +31,9 @@ if mod(N,2)==0
 end
 if mod(N,2)==1
     for k=1:N
-        Y(N-k+1,N-k+1)=exp(-1i*pi*k*(k-1)/N);
+        Y(N-k+1,N-k+1)=exp(-1i*pi*k*(k+1)/N);
     end
-end
+    endZ
 %% Construct Equalization matrix 
 S=eye(N);
 T=[S(2*N-P+1:N,:);S];
@@ -47,9 +47,11 @@ if Equal==2
 end
 %% Equalization
 Symbols4=zeros(size(Symbols3));
+
 for count=1:Block_Num
     Symbols4(:,:,count)=G*Y*Symbols3(:,:,count);
 end
+
 %% Apply IDFT 
 Symbols5=zeros(size(Symbols4));
 for count=1:Block_Num
