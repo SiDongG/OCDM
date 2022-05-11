@@ -11,3 +11,5 @@ Implementation algorithm based on Seminal Paper on OCDM:https://ieeexplore.ieee.
 --Remark1: Equation 34 is erraneous, Instead of Complex Conjugate of diagonal CFR matrix, Conjugate Transpose should be used 
 
 --Remark2: Currently Only support even number of sub-carriers, odd number Fresnel transform not implemented 
+
+--Remark3: Equation 30 is questionable, instead of k, use (N-k+1) as index (i.e.Reverse the diagonal)
