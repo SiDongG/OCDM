@@ -8,4 +8,4 @@ Transmitter.m, Channel.m, Receiver.m are Transmitter, multipath channel, receive
 
 Implementation algorithm based on Seminal Paper on OCDM:https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7523229
 
-Remark1: Equation 34 is erraneous, Instead of Complex Conjugate of diagonal CFR matrix, Conjugate Transpose should be used 
+[x] Remark1: Equation 34 is erraneous, Instead of Complex Conjugate of diagonal CFR matrix, Conjugate Transpose should be used 
