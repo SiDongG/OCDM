@@ -2,7 +2,9 @@
 MATLAB implementation of Orthogonal Chirp Division Multiplexing w Discrete Fresnel Transform 
 
 
-OCDM folder: OCDM.mat generates 4,16,64-QAM OCDM transmission bit rate under ZF and MMSE equalizations
+### OCDM folder: 
+
+OCDM.mat generates 4,16,64-QAM OCDM transmission bit rate under ZF and MMSE equalizations
 
 Transmitter.m, Channel.m, Receiver.m are Transmitter, multipath channel, receiver architecture simulations respectively 
 
@@ -15,4 +17,6 @@ Implementation algorithm based on Seminal Paper on OCDM:https://ieeexplore.ieee.
 --Remark3: Equation 30 is questionable, instead of k, use (N-k+1) as index (i.e.Reverse the diagonal)
 
 
-DFT-P-OFDM folder: DFTPOFDM.mat generates single carrier DFT precoded transmission and calculates PAPR
+### DFT-P-OFDM folder: 
+
+DFTPOFDM.mat generates single carrier DFT precoded transmission and calculates PAPR
