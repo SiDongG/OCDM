@@ -43,7 +43,7 @@ if Equal==1
     G=inv(D);
 end
 if Equal==2
-    G=conj(D)/(D^2+1/SNR);
+    G=D'/(D*D'+1/SNR);
 end
 %% Equalization
 Symbols4=zeros(size(Symbols3));

@@ -7,7 +7,6 @@ Block_Num=100; %Block Number
 C=4; %Len Cyclic Prefix 
 P=N+C;
 loop_Num=1000;
-Equal=1;
 S=eye(N);
 T=[S(2*N-P+1:N,:);S];
 R=[zeros(N,P-N),eye(N)];
@@ -19,7 +18,7 @@ for dB=0:4:40
     disp(dB);
     SNR=10^(dB/10);
     count=1;
-    for equal=1:2
+    for Equal=1:2
         for U=1:3
             M=4^U;
             for loop=1:loop_Num
