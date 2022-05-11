@@ -13,3 +13,6 @@ Implementation algorithm based on Seminal Paper on OCDM:https://ieeexplore.ieee.
 --Remark2: Currently Only support even number of sub-carriers, odd number Fresnel transform not implemented (Update: fixed, but equation 30 odd number Zadoff-Chu Sequence is changed to k(k+1) for it to work, needs mathematically proof of relation under equation 29) 
 
 --Remark3: Equation 30 is questionable, instead of k, use (N-k+1) as index (i.e.Reverse the diagonal)
+
+
+DFT-P-OFDM folder: DFTPOFDM.mat generates single carrier DFT precoded transmission and calculates PAPR
