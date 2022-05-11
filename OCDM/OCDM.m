@@ -1,12 +1,12 @@
 
 clear; clc; close all;
 N=64; %Number of Subcarrier
-L=2; %Channel Length
+L=4; %Channel Length
 Block_Num=100; %Block Number
 %M=4; %Modulation QAM
-C=2; %Len Cyclic Prefix 
+C=4; %Len Cyclic Prefix 
 P=N+C;
-loop_Num=100;
+loop_Num=1000;
 Equal=1;
 S=eye(N);
 T=[S(2*N-P+1:N,:);S];
@@ -34,13 +34,16 @@ for dB=0:4:40
     end
 end
 total=total/loop_Num;
-figure();grid on; hold on;
-semilogy(0:4:40,total(:,:,1),'bx-');
-semilogy(0:4:40,total(:,:,2),'rx-');
-semilogy(0:4:40,total(:,:,3),'gx-');
-semilogy(0:4:40,total(:,:,4),'b-');
-semilogy(0:4:40,total(:,:,5),'r-');
-semilogy(0:4:40,total(:,:,6),'g-');
+figure()
+box on; hold on;
+plot(0:4:40,total(:,:,1),'bx-');
+plot(0:4:40,total(:,:,2),'rx-');
+plot(0:4:40,total(:,:,3),'gx-');
+plot(0:4:40,total(:,:,4),'b-');
+plot(0:4:40,total(:,:,5),'r-');
+plot(0:4:40,total(:,:,6),'g-');
+set(gca,'Yscale','log');
+ylim([1e-4 1]);
 xlabel('SNR(dB)');
 ylabel('Ber');
 legend('OCDM/ZF 4QAM','OCDM/ZF 16QAM','OCDM/ZF 64QAM','OCDM/MMSE 4QAM','OCDM/MMSE 16QAM','OCDM/MMSE 64QAM')
