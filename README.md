@@ -19,4 +19,8 @@ Implementation algorithm based on Seminal Paper on OCDM:https://ieeexplore.ieee.
 
 ### DFT-P-OFDM folder: 
 
-DFTPOFDM.mat generates single carrier DFT precoded transmission and calculates PAPR
+DFTPOFDM.mat generates single carrier DFT precoded transmission and calculates PAPR before and after DFT-Precoding. around 1.5dB decrease. 
+
+Algorithm based on WINNER project DFT-P-OFDM:https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=5357586&tag=1
+
+--Remark1: Did not implement entire transmission chain and plot BER, the principle is simple SCM transmission
