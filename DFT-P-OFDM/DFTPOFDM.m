@@ -24,7 +24,7 @@ if M==64
     Symbols=qammod(Bits2,M)*sqrt(1/42);
 end
 Symbols=reshape(Symbols,N,1,Block_Num);
-%% N-point DFT
+%% N-point DFT Precoding 
 IFFT=zeros(N);
 for a=1:N
     for b=1:N
@@ -49,8 +49,29 @@ PAPR=10*log10(Max/Avg);
 %% Frequency Mapping
 %Use a scheme with 64 contagious subcarriers and 16 zero-paddled
 %subcarriers
-
-
+Symbols1=zeros(N2,1,Block_Num);
+for count=1:Block_Num
+    Symbols1(:,:,count)=[Symbols0(:,:,count);zeros(16,1)];
+end
+%% IDFT 
+IFFT2=zeros(N2);
+for a=1:N2
+    for b=1:N2
+        IFFT2(a,b)=exp(1i*2*pi*(a-1)*(b-1)/N2);
+    end 
+end
+IFFT2=IFFT2*1/sqrt(N2);
+FFT2=conj(IFFT2);
+Symbols2=zeros(N2,1,Block_Num);
+for count=1:Block_Num
+    Symbols2(:,:,count)=IFFT2*Symbols1(:,:,count);
+end
+%% PAPR after precoding
+Symbol_test=reshape(Symbols2,1,N2*Block_Num);
+Max2=abs(max(Symbol_test));
+Avg2=mean(abs(Symbol_test));
+PAPR2=10*log10(Max2/Avg2);
+%% Cyclic Prefix 
 
 
 
