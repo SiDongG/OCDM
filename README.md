@@ -24,3 +24,7 @@ DFTPOFDM.mat generates single carrier DFT precoded transmission and calculates P
 Algorithm based on WINNER project DFT-P-OFDM:https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=5357586&tag=1
 
 --Remark1: Did not implement entire transmission chain and plot BER, the principle is simple SCM transmission
+
+### OCDM-CFO foler:
+
+Simulate performance of OCDM under subcarrier frequency offset w ZF and MMSE equalization 
