@@ -42,7 +42,7 @@ plot(0:4:40,total(:,:,4),'b-');
 plot(0:4:40,total(:,:,5),'r-');
 plot(0:4:40,total(:,:,6),'g-');
 set(gca,'Yscale','log');
-ylim([1e-4 1]);
+ylim([1e-6 1]);
 xlabel('SNR(dB)');
 ylabel('Ber');
 legend('OCDM/ZF 4QAM','OCDM/ZF 16QAM','OCDM/ZF 64QAM','OCDM/MMSE 4QAM','OCDM/MMSE 16QAM','OCDM/MMSE 64QAM')
