@@ -28,3 +28,5 @@ Algorithm based on WINNER project DFT-P-OFDM:https://ieeexplore.ieee.org/stamp/s
 ### OCDM-CFO foler:
 
 Simulate performance of OCDM under subcarrier frequency offset w ZF and MMSE equalization 
+
+CFO mitigation and channel estimation based on: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9638964
