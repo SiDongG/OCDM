@@ -25,7 +25,7 @@ Algorithm based on WINNER project DFT-P-OFDM:https://ieeexplore.ieee.org/stamp/s
 
 --Remark1: Did not implement entire transmission chain and plot BER, the principle is simple SCM transmission
 
-### OCDM-CFO foler:
+### OCDM-CFO folder:
 
 Simulate performance of OCDM under subcarrier frequency offset w ZF and MMSE equalization 
 
