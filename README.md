@@ -27,6 +27,12 @@ Algorithm based on WINNER project DFT-P-OFDM:https://ieeexplore.ieee.org/stamp/s
 
 ### OCDM-CFO folder:
 
-Simulate performance of OCDM under subcarrier frequency offset w ZF and MMSE equalization 
+Simulate performance of OCDM under subcarrier frequency offset and blind CSI w ZF and MMSE equalization 
 
-CFO mitigation and channel estimation based on: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9638964
+CFO mitigation and channel estimation implementation: https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9638964
+
+CFOOCDM.m demonstrates successful CFO compensation and channel estimation with OCDM transmission, Transceiver architecture in OCDMTxRx.m
+
+--Remark1: The model assumes time-invariant channel, but principle can be applied to quasi-static channel easily
+
+--Remark2: Equation 4, Progressive CFO based on Block number term is omitted due to above assumption
