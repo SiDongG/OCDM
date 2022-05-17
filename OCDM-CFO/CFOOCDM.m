@@ -13,7 +13,7 @@ SNR=1e7;
 E=3;  %Total Energy for Pilots 
 Pilot0=[E,0,0,0,0,0,0,0];
 Pilot1=[0,0,0,0,0,0,0,0];
-Equal=2;
+Equal=1;
 K=length(Pilot0);
 L1=length(Pilot1);
 Pilot=length(Pilot0)+length(Pilot1); %Total Pilot length
@@ -22,17 +22,18 @@ P=N+C+Pilot;
 loop_Num=100;
 
 %% Simulation
-total=zeros(1,11,2);  %preallocating for Speed, SNR from 0 to 20
-ratio=zeros(1,11,2);
-for dB=0:4:40
+total=zeros(1,11,3);  %preallocating for Speed, SNR from 0 to 20
+ratio=zeros(1,11,3);
+for dB=0:2:20
     disp(dB);
     SNR=10^(dB/10);
     count=1;
-    for Equal=1:2
+    for U=1:3
+        M=4^U;
         for loop=1:loop_Num
             [Bits,Bitsre]=OCDMTxRx(SNR,Equal,N,L,Block_Num,M,C,W,K,L1,Pilot0,Pilot1,E);     
-            ratio(1,dB/4+1,count)=sum(Bits~=Bitsre)/(Block_Num*N*log2(M));
-            total(1,dB/4+1,count)=total(1,dB/4+1,count)+ratio(1,dB/4+1,count);
+            ratio(1,dB/2+1,count)=sum(Bits~=Bitsre)/(Block_Num*N*log2(M));
+            total(1,dB/2+1,count)=total(1,dB/2+1,count)+ratio(1,dB/2+1,count);
         end
         count=count+1;
     end
@@ -40,13 +41,15 @@ end
 total=total/loop_Num;
 figure()
 box on; hold on;
-plot(0:4:40,total(:,:,1),'bx-');
-plot(0:4:40,total(:,:,2),'rx-');
+plot(0:2:20,total(:,:,1),'bx-');
+plot(0:2:20,total(:,:,2),'rx-');
+plot(0:2:20,total(:,:,3),'gx-');
+
 set(gca,'Yscale','log');
-ylim([1e-6 1]);
+ylim([1e-4 1]);
 xlabel('SNR(dB)');
 ylabel('Ber');
-legend('OCDM/ZF 4QAM','OCDM/MMSE 4QAM')
+legend('OCDM/ZF 4QAM','OCDM/ZF 16QAM','OCDM/ZF 64QAM')
 
 
 
