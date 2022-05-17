@@ -36,3 +36,7 @@ CFOOCDM.m demonstrates successful CFO compensation and channel estimation with O
 --Remark1: The model assumes time-invariant channel, but principle can be applied to quasi-static channel easily
 
 --Remark2: Equation 4, Progressive CFO based on Block number term is omitted due to above assumption
+
+--Remark3: Equation 14, definition of the matrix has an error on H12, should be (K-Lh-1) zeros
+
+--Remark4: Pilots are longer than necessary, but since zero-paddling pilots are used, it is not energy-inefficient 
