@@ -10,7 +10,7 @@ Transmitter.m, Channel.m, Receiver.m are Transmitter, multipath channel, receive
 
 Implementation algorithm based on Seminal Paper on OCDM:https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=7523229
 
---Remark1: Equation 34 is erraneous, Instead of Complex Conjugate of diagonal CFR matrix, Conjugate Transpose should be used 
+--Remark1: Equation 34, Instead of Complex Conjugate of diagonal CFR matrix, Conjugate Transpose should be used fpr consistency, although result does not change  
 
 --Remark2: Currently Only support even number of sub-carriers, odd number Fresnel transform not implemented (Update: fixed, but equation 30 odd number Zadoff-Chu Sequence is changed to k(k+1) for it to work, needs mathematically proof of relation under equation 29) 
 
@@ -25,6 +25,7 @@ Algorithm based on WINNER project DFT-P-OFDM:https://ieeexplore.ieee.org/stamp/s
 
 --Remark1: Did not implement entire transmission chain and plot BER, the principle is simple SCM transmission
 
+
 ### OCDM-CFO folder:
 
 Simulate performance of OCDM under subcarrier frequency offset and blind CSI w ZF and MMSE equalization 
@@ -35,7 +36,7 @@ CFOOCDM.m demonstrates successful CFO compensation and channel estimation with O
 
 --Remark1: The model assumes time-invariant channel, but principle can be applied to quasi-static channel easily
 
---Remark2: Equation 4, Progressive CFO based on Block number term is omitted due to above assumption
+--Remark2: Equation 4, Progressive CFO based on Block number term is omitted, block index dropped during equalization
 
 --Remark3: Equation 14, definition of the matrix has an error on H12, should be (K-Lh-1) zeros
 
