@@ -41,3 +41,5 @@ CFOOCDM.m demonstrates successful CFO compensation and channel estimation with O
 --Remark3: Equation 14, definition of the matrix has an error on H12, should be (K-Lh-1) zeros
 
 --Remark4: Pilots are longer than necessary, but since zero-paddling pilots are used, it is not energy-inefficient 
+
+### MIMO-OCDM
