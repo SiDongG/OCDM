@@ -43,3 +43,4 @@ CFOOCDM.m demonstrates successful CFO compensation and channel estimation with O
 --Remark4: Pilots are longer than necessary, but since zero-paddling pilots are used, it is not energy-inefficient 
 
 ### MIMO-OCDM
+ 2 by 2 MIMO-OCDM linear equalization 
