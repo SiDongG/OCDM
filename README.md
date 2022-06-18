@@ -44,3 +44,6 @@ CFOOCDM.m demonstrates successful CFO compensation and channel estimation with O
 
 ### MIMO-OCDM
  2 by 2 MIMO-OCDM linear equalization 
+ 
+### FDPrecodedMIMO-OCDM
+ 2 by 2 Frequency domain precoded MIMO-OCDM, ideas modified based on and extended from: https://ieeexplore.ieee.org/document/1296644
