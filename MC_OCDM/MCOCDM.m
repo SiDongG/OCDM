@@ -4,9 +4,9 @@
 % subcarriers, the size of each subset has to be divisible by total
 % sub-carrier length. 
 K=8; %Size of subset 
-N=64; %Number of Subcarrier, assume always even 
+N=16; %Number of Subcarrier, assume always even 
 L=4; %Channel Length
-Block_Num=100; %Block Number
+Block_Num=1; %Block Number
 C=4; %Len Cyclic Prefix 
 M=4; %4QAM Modulation
 SNR=10;
@@ -43,40 +43,94 @@ if mod(K,2)==0
 end
 IDFnT0=DFnT0';
 Symbols2=zeros(size(Symbols));
-Index=1;
-for a=1:N/K
-    Tu=zeros(K,N);
-    for b=1:K
-        for c=1:N
-            if c==Index
-                Tu(b,c)=1;
-            else
-                Tu(a,c)=0;
+for count=1:Block_Num
+    Index=1;
+    for a=1:N/K
+        Tu=zeros(K,N);
+        for b=1:K
+            for c=1:N
+                if c==Index
+                    Tu(b,c)=1;
+                else
+                    Tu(b,c)=0;
+                end
             end
+            Index=Index+1;
         end
-        Index=Index+1;
+        Tu
+        Symbols2(:,:,Block_Num)=Symbols2(:,:,Block_Num)+IFFT*Tu.'*IDFnT0*Symbols(Index-K:Index-1,:,Block_Num);
     end
-    Symbols2=Symbols2+
 end
-
-
-
-
-for a=1:length(u)
-    for c=1:N
-        if c==u(a)
-            Tu(a,c)=1;
+%% Channel
+h=10*(1/sqrt(2*L))*(randn(1,L)+1i*randn(1,L));
+H0=zeros(P); %Preallocating for speed, H0 is the P by P matrix have the (i,j)th entry h(i-j)
+H1=zeros(P); %Preallocating for speed, H1 is the P by P matrix have the (i,j)th entry h(P+i-j)
+a=1;
+while a<P+1  %generate the channel matrces
+    b=1;
+    while b<P+1
+        if a-b<0 || a-b>L-1
+            H0(a,b)=0;
         else
-            Tu(a,c)=0;
+            H0(a,b)=h(a-b+1);
         end
-    end
-end
-for a=1:length(b)
-    for c=1:N
-        if c==b(a)
-            Tb(a,c)=1;
+        if P+a-b<0 || P+a-b>L-1
+            H1(a,b)=0;
         else
-            Tb(a,c)=0;
+            H1(a,b)=h(P+a-b+1);
         end
+        b=b+1;
+    end
+    a=a+1;
+end
+H=R*H0*T;
+Symbols3=zeros(size(Symbols2));
+for count=1:Block_Num
+    Symbols3(:,:,count)=H*Symbols2(:,:,count);
+end
+%% Despreading 
+Symbols4=zeros(size(Symbols3));
+G=pinv(FFT*H*IFFT); %Composite Equalization Matrix
+for count=1:Block_Num
+    Index=1;
+    for a=1:N/K
+        Tu=zeros(K,N);
+        for b=1:K
+            for c=1:N
+                if c==Index
+                    Tu(b,c)=1;
+                else
+                    Tu(b,c)=0;
+                end
+            end
+            Index=Index+1;
+        end
+        Symbols4(Index-K:Index-1,:,Block_Num)=DFnT0*G(Index-K:Index-1,Index-K:Index-1)*Tu*FFT*Symbols3(:,:,Block_Num);
     end
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
