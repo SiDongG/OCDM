@@ -1,15 +1,16 @@
 %% Multi-Carrier OCDM 
 %% Parameter Initialization
+function [Error_rate]=MCOCDM(K,N,L,Block_Num,C,SNR)
 % Use 64 sub-carriers, we spread the data symbols over a smaller set of
 % subcarriers, the size of each subset has to be divisible by total
 % sub-carrier length. 
-K=8; %Size of subset 
-N=16; %Number of Subcarrier, assume always even 
-L=4; %Channel Length
-Block_Num=1; %Block Number
-C=4; %Len Cyclic Prefix 
+% K=8; %Size of subset 
+% N=16; %Number of Subcarrier, assume always even 
+% L=4; %Channel Length
+% Block_Num=2; %Block Number
+% C=4; %Len Cyclic Prefix 
+% SNR=10;
 M=4; %4QAM Modulation
-SNR=10;
 P=N+C;
 S=eye(N);
 T=[S(2*N-P+1:N,:);S];
@@ -57,8 +58,7 @@ for count=1:Block_Num
             end
             Index=Index+1;
         end
-        Tu
-        Symbols2(:,:,Block_Num)=Symbols2(:,:,Block_Num)+IFFT*Tu.'*IDFnT0*Symbols(Index-K:Index-1,:,Block_Num);
+        Symbols2(:,:,count)=Symbols2(:,:,count)+IFFT*Tu.'*IDFnT0*Symbols(Index-K:Index-1,:,count);
     end
 end
 %% Channel
@@ -84,9 +84,13 @@ while a<P+1  %generate the channel matrces
     a=a+1;
 end
 H=R*H0*T;
+%% AWGN
+nr=randn(N,1,Block_Num);
+ni=randn(N,1,Block_Num);
+Noise=(sqrt(2)/2)*(nr+1i*ni);
 Symbols3=zeros(size(Symbols2));
 for count=1:Block_Num
-    Symbols3(:,:,count)=H*Symbols2(:,:,count);
+    Symbols3(:,:,count)=H*Symbols2(:,:,count)+(1/sqrt(SNR))*Noise(:,:,count);
 end
 %% Despreading 
 Symbols4=zeros(size(Symbols3));
@@ -105,10 +109,26 @@ for count=1:Block_Num
             end
             Index=Index+1;
         end
-        Symbols4(Index-K:Index-1,:,Block_Num)=DFnT0*G(Index-K:Index-1,Index-K:Index-1)*Tu*FFT*Symbols3(:,:,Block_Num);
+        Symbols4(Index-K:Index-1,:,count)=DFnT0*G(Index-K:Index-1,Index-K:Index-1)*Tu*FFT*Symbols3(:,:,count);
     end
 end
-
+%% Demodulation
+if M==4
+    Symbols5=qamdemod(Symbols4/sqrt(1/2),M);
+end
+Bitsre=zeros(1,N*Block_Num*log2(M));
+start=1;
+for count=1:Block_Num
+    for k=1:N
+        dec=dec2bin(Symbols5(k,1,count),log2(M));
+        for n=1:length(dec)
+            Bitsre(start)=str2double(dec(n));
+            start=start+1;
+        end
+    end
+end
+%% Error Statistics
+Error_rate=sum(Bits~=Bitsre)/length(Bits);
 
 
 
