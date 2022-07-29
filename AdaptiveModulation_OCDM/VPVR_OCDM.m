@@ -4,22 +4,22 @@
 
 clear; clc; close all;
 %% Parameter Initialization
-N=16; %Number of Subcarrier, assume always even 
+N=64; %Number of Subcarrier, assume always even 
 L=4; %Channel Length
-Block_Num=1; %Block Number
+Block_Num=100; %Block Number
 C=4; %Len Cyclic Prefix 
-SNR=10;
+SNR=100;
 P=N+C;
 Q=4; %Size of subset \
-V=10; %Channel Variance 
+V=1; %Channel Variance 
 S=eye(N);
 T=[S(2*N-P+1:N,:);S];
 R=[zeros(N,P-N),eye(N)];
-M=2; %2-QAM (BPSK)
-Pb=1e-4;
-N_var=1;
+% M=2; %2-QAM (BPSK)
+Pb=0.001;
+N_var=1/sqrt(SNR);
 K=-1.5/(log(5*Pb)); % Above Cutoff Fade Level Constraint
-Power=N_var*SNR;
+Power=64; %Total Power Constraint 
 Power_avg=Power/N;
 %% Matrix Initialization 
 IFFT=zeros(N);
@@ -65,16 +65,18 @@ end
 D=FFT*R*H0*T*IFFT;
 %% Block-Wise Classification
 D_img=sort(diag(abs(D)));
+D_img=Power_avg*D_img/N_var^2;
 D_avg=zeros(1,length(D_img)/Q);
 for k=1:N/Q
     D_avg(k)=mean(D_img(4*k-3:4*k));
 end
+% D_avg=Power_avg*D_avg/N_var^2;
 %% Sub-Carrier Classification 
-y0=0.2; %Initialize Threshold and iteratively search for power balance
+y0=1; %Initialize Threshold and iteratively search for power balance
 yk=y0/K;
 Power_alloc=zeros(size(D_avg));
 QAM_alloc=zeros(size(D_avg));
-while abs(sum(Power_alloc)-Power)>Power/10   %Within 5% Accuracy
+while abs(sum(Power_alloc)-Power/Q)>Power/Q/10   %Within 5% Accuracy
     for count=1:N/Q
         if (0<=D_avg(count)/yk) && (D_avg(count)/yk<2)
             Power_alloc(count)=0;
@@ -93,13 +95,14 @@ while abs(sum(Power_alloc)-Power)>Power/10   %Within 5% Accuracy
             QAM_alloc(count)=64;
         end
     end
-    if sum(Power_alloc)>Power+Power/10
-        yk=yk+0.00001;
-    elseif sum(Power_alloc)<Power-Power/10
-        yk=yk-0.00001;
+    if sum(Power_alloc)>Power/Q+Power/Q/10
+        yk=yk+0.0001;
+    elseif sum(Power_alloc)<Power/Q-Power/Q/10
+        yk=yk-0.0001;
     else
         yk=yk;
     end
+    yk
     sum(Power_alloc)
 end
 %% Expanding Power and QAM Allocation 
@@ -109,13 +112,14 @@ for k=1:N/Q
     Power_alloc2(4*k-3:4*k)=Power_alloc(k);
     QAM_alloc2(4*k-3:4*k)=QAM_alloc(k);
 end
-% bar(D_img)
-% hold on;
-% plot([0,64],[2*yk,2*yk])
-% plot([0,64],[4*yk,4*yk])
-% plot([0,64],[16*yk,16*yk])
-% figure
-% bar(Power_alloc)
+bar(D_img)
+hold on;
+plot([0,64],[2*yk,2*yk])
+plot([0,64],[4*yk,4*yk])
+plot([0,64],[16*yk,16*yk])
+plot([0,64],[64*yk,64*yk])
+figure
+bar(Power_alloc2)
 sum(Power_alloc)
 %% Bit Generation 
 Total_Bits=0;
@@ -146,9 +150,9 @@ for count=1:Block_Num
             Symbols(i,:,count)=qammod(B,16)*sqrt(1/10);
             Index=Index+4;
         else
-            B=bin2dec(num2str(Bits(Index:Index+7)));
+            B=bin2dec(num2str(Bits(Index:Index+5)));
             Symbols(i,:,count)=qammod(B,64)*sqrt(1/42);
-            Index=Index+8;
+            Index=Index+6;
         end
     end
 end
@@ -179,7 +183,7 @@ ni=randn(N,1,Block_Num);
 Noise=(sqrt(2)/2)*(nr+1i*ni);
 Symbols3=zeros(size(Symbols2));
 for count=1:Block_Num
-    Symbols3(:,:,count)=D*Symbols2(:,:,count)+Noise(:,:,count);
+    Symbols3(:,:,count)=D*Symbols2(:,:,count)+N_var*Noise(:,:,count);
 end
 %% Despreading 
 Symbols4=zeros(size(Symbols3));
@@ -201,41 +205,64 @@ for count=1:Block_Num
         Symbols4(Index-Q:Index-1,:,count)=DFnT0*G(Index-Q:Index-1,Index-Q:Index-1)*Tu*Symbols3(:,:,count);
     end
 end
+%% Preparation for calculating BER per subcarrier
+
 %% Demodulation
 Bitsre=zeros(size(Bits));
-Index=1;
+Index=0;
 Symbols4=Symbols4./Power_alloc2;
+Error_subcarrier=zeros(1,64);
 for count=1:Block_Num
     for i=1:N
         if QAM_alloc2(i)==2
             A=qamdemod(Symbols4(i,:,count),2);
             dec=dec2bin(A,1);
-            Bitsre(Index)=str2double(dec);
+            for n=1:length(dec)
+                Bitsre(Index+n)=str2double(dec(n));
+                if Bitsre(Index+n)~=Bits(Index+n)
+                    Error_subcarrier(1,i)=Error_subcarrier(1,i)+1;
+                end
+            end            
             Index=Index+1;
         elseif QAM_alloc2(i)==4
-            A=qamdemod(Symbols4(i,:,count),4);
+            A=qamdemod(Symbols4(i,:,count)/sqrt(1/2),4);
             dec=dec2bin(A,2);
-            Bitsre(Index)=str2double(dec(1));
-            Bitsre(Index+1)=str2double(dec(2));
+            for n=1:length(dec)
+                Bitsre(Index+n)=str2double(dec(n));
+                if Bitsre(Index+n)~=Bits(Index+n)
+                    Error_subcarrier(1,i)=Error_subcarrier(1,i)+1;
+                end
+            end
             Index=Index+2;
         elseif QAM_alloc2(i)==16
-            A=qamdemod(Symbols4(i,:,count),16);
+            A=qamdemod(Symbols4(i,:,count)/sqrt(1/10),16);
             dec=dec2bin(A,4);
             for n=1:length(dec)
                 Bitsre(Index+n)=str2double(dec(n));
+                if Bitsre(Index+n)~=Bits(Index+n)
+                    Error_subcarrier(1,i)=Error_subcarrier(1,i)+1;
+                end
             end
             Index=Index+4;
         elseif QAM_alloc2(i)==64
-            A=qamdemod(Symbols4(i,:,count),64);
-            dec=dec2bin(A,8);
+            A=qamdemod(Symbols4(i,:,count)/sqrt(1/42),64);
+            dec=dec2bin(A,6);
             for n=1:length(dec)
                 Bitsre(Index+n)=str2double(dec(n));
+                if Bitsre(Index+n)~=Bits(Index+n)
+                    Error_subcarrier(1,i)=Error_subcarrier(1,i)+1;
+                end
             end
-            Index=Index+8;
+            Index=Index+6;
         else
             disp('')
         end
     end
+end
+%% Count Error Per Subcarrier
+Error_rate_subcarrier=zeros(1,64);
+for i=1:N
+    Error_rate_subcarrier(i)=Error_subcarrier(i)/(Block_Num*log2(QAM_alloc2(i)));
 end
 %% Error Counting 
 Error=sum(Bitsre~=Bits);
@@ -256,8 +283,8 @@ for i=1:N
         disp('')
     end
 end
-
-
+Effective_SNR=Power_alloc2.*D_img/N_var^2;
+PowerK=sum(1/yk-1./D_img);
 
 
 
