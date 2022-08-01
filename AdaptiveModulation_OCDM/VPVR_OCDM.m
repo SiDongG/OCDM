@@ -1,26 +1,36 @@
 %% Variable Power Variable Rate Adaptive Modulation OCDM
+function [Error_rate,C_Adaptation]=VPVR_OCDM(N,L,Block_Num,Mode,Equal,Pb,SNR)
 % Variable Power Variable Rate Block-wise Bit Loading OCDM using
 % Multi-carrier Spreading 
-
-clear; clc; close all;
-%% Parameter Initialization
-N=64; %Number of Subcarrier, assume always even 
-L=4; %Channel Length
-Block_Num=100; %Block Number
+% Equal==1: ZF
+% Equal==2: MMSE
+% Equal==3: Sphere Decoding
+% Mode==1:Consecutive
+% Mode==2:Rearrange
+% Mode==3:Interleaving 
+% Compare rate bewteen rearrange partitioning and consecutive partitioning
+% clear; clc; close all;
+%% Parameter Initialization (Test)
+% N=256; %Number of Subcarrier, assume always even 
+% L=4; %Channel Length
+% Block_Num=100; %Block Number
+% C=4; %Len Cyclic Prefix 
+% Mode=1;
+% SNR=0.1;
+% Pb=0.01;
+%% Global Parameters
+Z=20;%1/Z is the threshold searching rigidity 
 C=4; %Len Cyclic Prefix 
-SNR=100;
 P=N+C;
 Q=4; %Size of subset \
-V=1; %Channel Variance 
+V=10; %Channel Variance 
 S=eye(N);
 T=[S(2*N-P+1:N,:);S];
 R=[zeros(N,P-N),eye(N)];
-% M=2; %2-QAM (BPSK)
-Pb=0.001;
 N_var=1/sqrt(SNR);
 K=-1.5/(log(5*Pb)); % Above Cutoff Fade Level Constraint
-Power=64; %Total Power Constraint 
-Power_avg=Power/N;
+Power=N; %Total Power Constraint 
+Power_avg=Power/N; %1 unit of power per subcarrier 
 %% Matrix Initialization 
 IFFT=zeros(N);
 for a=1:N
@@ -64,11 +74,21 @@ while a<P+1  %generate the channel matrces
 end
 D=FFT*R*H0*T*IFFT;
 %% Block-Wise Classification
-D_img=sort(diag(abs(D)));
-D_img=Power_avg*D_img/N_var^2;
-D_avg=zeros(1,length(D_img)/Q);
+if Mode==1
+    D_img=diag(abs(D));
+elseif Mode==2
+    D_img=sort(diag(abs(D)));
+else
+    A=diag(abs(D));
+    for i=1:N/Q
+        D_img(4*i-3:4*i)=[A(i),A(i+N/Q),A(i+2*N/Q),A(i+3*N/Q)];
+    end
+    D_img=D_img.';
+end
+D_img2=Power_avg*D_img/N_var^2;
+D_avg=zeros(1,length(D_img2)/Q);
 for k=1:N/Q
-    D_avg(k)=mean(D_img(4*k-3:4*k));
+    D_avg(k)=mean(D_img2(4*k-3:4*k));
 end
 % D_avg=Power_avg*D_avg/N_var^2;
 %% Sub-Carrier Classification 
@@ -76,7 +96,7 @@ y0=1; %Initialize Threshold and iteratively search for power balance
 yk=y0/K;
 Power_alloc=zeros(size(D_avg));
 QAM_alloc=zeros(size(D_avg));
-while abs(sum(Power_alloc)-Power/Q)>Power/Q/10   %Within 5% Accuracy
+while abs(sum(Power_alloc)-Power/Q)>Power/Q/Z   %Within 5% Accuracy
     for count=1:N/Q
         if (0<=D_avg(count)/yk) && (D_avg(count)/yk<2)
             Power_alloc(count)=0;
@@ -95,15 +115,15 @@ while abs(sum(Power_alloc)-Power/Q)>Power/Q/10   %Within 5% Accuracy
             QAM_alloc(count)=64;
         end
     end
-    if sum(Power_alloc)>Power/Q+Power/Q/10
+    if sum(Power_alloc)>Power/Q+Power/Q/Z
         yk=yk+0.0001;
-    elseif sum(Power_alloc)<Power/Q-Power/Q/10
+    elseif sum(Power_alloc)<Power/Q-Power/Q/Z
         yk=yk-0.0001;
     else
         yk=yk;
     end
-    yk
-    sum(Power_alloc)
+%     yk
+%     sum(Power_alloc)
 end
 %% Expanding Power and QAM Allocation 
 Power_alloc2=zeros(size(D_img));
@@ -112,15 +132,15 @@ for k=1:N/Q
     Power_alloc2(4*k-3:4*k)=Power_alloc(k);
     QAM_alloc2(4*k-3:4*k)=QAM_alloc(k);
 end
-bar(D_img)
-hold on;
-plot([0,64],[2*yk,2*yk])
-plot([0,64],[4*yk,4*yk])
-plot([0,64],[16*yk,16*yk])
-plot([0,64],[64*yk,64*yk])
-figure
-bar(Power_alloc2)
-sum(Power_alloc)
+% bar(D_img2)
+% hold on;
+% plot([0,N],[2*yk,2*yk])
+% plot([0,N],[4*yk,4*yk])
+% plot([0,N],[16*yk,16*yk])
+% plot([0,N],[64*yk,64*yk])
+% figure
+% bar(Power_alloc2)
+% sum(Power_alloc)
 %% Bit Generation 
 Total_Bits=0;
 for i=1:N
@@ -185,9 +205,16 @@ Symbols3=zeros(size(Symbols2));
 for count=1:Block_Num
     Symbols3(:,:,count)=D*Symbols2(:,:,count)+N_var*Noise(:,:,count);
 end
-%% Despreading 
+%% Despreading and Equalization 
 Symbols4=zeros(size(Symbols3));
-G=pinv(D); %Composite Equalization Matrix
+
+if Equal==1
+    G=pinv(D); %Composite Equalization Matrix
+elseif Equal==2
+    G=D'/(D*D'+1/SNR);
+else
+    disp('')
+end
 for count=1:Block_Num
     Index=1;
     for a=1:N/Q
@@ -211,7 +238,7 @@ end
 Bitsre=zeros(size(Bits));
 Index=0;
 Symbols4=Symbols4./Power_alloc2;
-Error_subcarrier=zeros(1,64);
+Error_subcarrier=zeros(1,N);
 for count=1:Block_Num
     for i=1:N
         if QAM_alloc2(i)==2
@@ -260,7 +287,7 @@ for count=1:Block_Num
     end
 end
 %% Count Error Per Subcarrier
-Error_rate_subcarrier=zeros(1,64);
+Error_rate_subcarrier=zeros(1,N);
 for i=1:N
     Error_rate_subcarrier(i)=Error_subcarrier(i)/(Block_Num*log2(QAM_alloc2(i)));
 end
@@ -283,7 +310,7 @@ for i=1:N
         disp('')
     end
 end
-Effective_SNR=Power_alloc2.*D_img/N_var^2;
+Effective_SNR=Power_alloc2.*D_img;
 PowerK=sum(1/yk-1./D_img);
 
 
