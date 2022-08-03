@@ -1,5 +1,5 @@
 %% Variable Power Variable Rate Adaptive Modulation OCDM
-function [Error_rate,C_Adaptation]=VPVR_OCDM(N,L,Block_Num,Mode,Equal,Pb,SNR)
+function [Error_rate,C_Adaptation]=VPVR_OCDM(N,Block_Num,Mode,Pb,SNR)
 % Variable Power Variable Rate Block-wise Bit Loading OCDM using
 % Multi-carrier Spreading 
 % Equal==1: ZF
@@ -13,17 +13,19 @@ function [Error_rate,C_Adaptation]=VPVR_OCDM(N,L,Block_Num,Mode,Equal,Pb,SNR)
 %% Parameter Initialization (Test)
 % N=256; %Number of Subcarrier, assume always even 
 % L=4; %Channel Length
-% Block_Num=100; %Block Number
+% Block_Num=1; %Block Number
 % C=4; %Len Cyclic Prefix 
-% Mode=1;
-% SNR=0.1;
+% Equal=1;
+% Mode=3;
+% SNR=1;
 % Pb=0.01;
 %% Global Parameters
-Z=20;%1/Z is the threshold searching rigidity 
+Z=10;%1/Z is the threshold searching rigidity 
 C=4; %Len Cyclic Prefix 
+L=4;
 P=N+C;
 Q=4; %Size of subset \
-V=10; %Channel Variance 
+V=1; %Channel Variance 
 S=eye(N);
 T=[S(2*N-P+1:N,:);S];
 R=[zeros(N,P-N),eye(N)];
@@ -80,47 +82,61 @@ elseif Mode==2
     D_img=sort(diag(abs(D)));
 else
     A=diag(abs(D));
+    D_img=zeros(N,1);
     for i=1:N/Q
-        D_img(4*i-3:4*i)=[A(i),A(i+N/Q),A(i+2*N/Q),A(i+3*N/Q)];
+        D_img(4*i-3:4*i,1)=[A(i),A(i+N/Q),A(i+2*N/Q),A(i+3*N/Q)].';
     end
-    D_img=D_img.';
 end
 D_img2=Power_avg*D_img/N_var^2;
 D_avg=zeros(1,length(D_img2)/Q);
 for k=1:N/Q
     D_avg(k)=mean(D_img2(4*k-3:4*k));
 end
+% D_avg=10*log10(D_avg);
 % D_avg=Power_avg*D_avg/N_var^2;
 %% Sub-Carrier Classification 
 y0=1; %Initialize Threshold and iteratively search for power balance
 yk=y0/K;
 Power_alloc=zeros(size(D_avg));
 QAM_alloc=zeros(size(D_avg));
+Loop=0;
+Broke=0;
 while abs(sum(Power_alloc)-Power/Q)>Power/Q/Z   %Within 5% Accuracy
     for count=1:N/Q
         if (0<=D_avg(count)/yk) && (D_avg(count)/yk<2)
             Power_alloc(count)=0;
             QAM_alloc(count)=0;
         elseif (2<=D_avg(count)/yk) && (D_avg(count)/yk<4)
-            Power_alloc(count)=Q*Power_avg*(1/(D_avg(count)*K));
+            Power_alloc(count)=Power_avg*(1/(D_avg(count)*K));
             QAM_alloc(count)=2;
         elseif (4<=D_avg(count)/yk) && (D_avg(count)/yk<16)
-            Power_alloc(count)=Q*Power_avg*(3/(D_avg(count)*K));
+            Power_alloc(count)=Power_avg*(3/(D_avg(count)*K));
             QAM_alloc(count)=4;
         elseif (16<=D_avg(count)/yk) && (D_avg(count)/yk<64)
-            Power_alloc(count)=Q*Power_avg*(15/(D_avg(count)*K));
+            Power_alloc(count)=Power_avg*(15/(D_avg(count)*K));
             QAM_alloc(count)=16;
         else
-            Power_alloc(count)=Q*Power_avg*(63/(D_avg(count)*K));
+            Power_alloc(count)=Power_avg*(63/(D_avg(count)*K));
             QAM_alloc(count)=64;
+%         elseif (128<=D_avg(count)/yk) && (D_avg(count)/yk<256)
+%             Power_alloc(count)=Power_avg*(127/(D_avg(count)*K));
+%             QAM_alloc(count)=128;
+%         else
+%             Power_alloc(count)=Power_avg*(255/(D_avg(count)*K));
+%             QAM_alloc(count)=256;
         end
     end
     if sum(Power_alloc)>Power/Q+Power/Q/Z
         yk=yk+0.0001;
-    elseif sum(Power_alloc)<Power/Q-Power/Q/Z
+    elseif sum(Power_alloc)<Power/Q-Power/Q/Z && yk>0
         yk=yk-0.0001;
     else
         yk=yk;
+    end
+    Loop=Loop+1;
+    if Loop>100000
+        Broke=1;
+        break
     end
 %     yk
 %     sum(Power_alloc)
@@ -132,6 +148,7 @@ for k=1:N/Q
     Power_alloc2(4*k-3:4*k)=Power_alloc(k);
     QAM_alloc2(4*k-3:4*k)=QAM_alloc(k);
 end
+% figure
 % bar(D_img2)
 % hold on;
 % plot([0,N],[2*yk,2*yk])
@@ -207,14 +224,7 @@ for count=1:Block_Num
 end
 %% Despreading and Equalization 
 Symbols4=zeros(size(Symbols3));
-
-if Equal==1
-    G=pinv(D); %Composite Equalization Matrix
-elseif Equal==2
-    G=D'/(D*D'+1/SNR);
-else
-    disp('')
-end
+G=pinv(D); %Composite Equalization Matrix
 for count=1:Block_Num
     Index=1;
     for a=1:N/Q
@@ -310,9 +320,11 @@ for i=1:N
         disp('')
     end
 end
-Effective_SNR=Power_alloc2.*D_img;
+Effective_SNR=Power_alloc2.*D_img2;
 PowerK=sum(1/yk-1./D_img);
-
+if Broke==1
+    Error_rate=1000;
+end
 
 
 
