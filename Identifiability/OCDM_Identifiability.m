@@ -7,6 +7,7 @@ K=15; %Actual Used Sub-carrier
 w=randi([-100,100])/100; %Normalized CFO
 c1=1/(2*N);
 c2=1/(2*N);
+% SNR=1000;
 %% Channel Generation
 h=(1/sqrt(2*L))*(randn(1,L)+1i*randn(1,L));
 D=diag(fft(h,N));
@@ -88,20 +89,20 @@ for count=1:Block_Num
     Symbols3(:,:,count)=Dff*Symbols2(:,:,count);
 end
 %% Equalization 
-Symbols_5=zeros(size(Symbols));
+Symbols5=zeros(size(Symbols));
 
 for count=1:Block_Num
-    Symbols_5(:,:,count) = qam_sphere_decoder(IFFT*D*A*Tzp,Symbols2(:,:,count),M,Symbols(:,:,count),N);
+    Symbols5(:,:,count) = qam_sphere_decoder(IFFT*D*A*Tzp,Symbols3(:,:,count),M,Symbols(:,:,count),K);
 end
 
 %% Demodulation
 if M==4
     Symbols6=qamdemod(Symbols5/sqrt(1/2),M);
 end
-Bitsre=zeros(1,N*Block_Num*log2(M));
+Bitsre=zeros(1,K*Block_Num*log2(M));
 start=1;
 for count=1:Block_Num
-    for k=1:N
+    for k=1:K
         dec=dec2bin(Symbols6(k,1,count),log2(M));
         for n=1:length(dec)
             Bitsre(start)=str2double(dec(n));
