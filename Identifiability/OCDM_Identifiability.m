@@ -1,4 +1,4 @@
-function BER=OCDM_Identifiability(SNR)
+% function BER=OCDM_Identifiability(SNR,Mode)
 Block_Num=100; %Block Number
 M=4; %Constellation
 L=4; %Channel Order
@@ -7,7 +7,7 @@ K=15; %Actual Used Sub-carrier
 w=randi([-100,100])/100; %Normalized CFO
 c1=1/(2*N);
 c2=1/(2*N);
-% SNR=1000;
+Mode=1;
 %% Channel Generation
 h=(1/sqrt(2*L))*(randn(1,L)+1i*randn(1,L));
 D=diag(fft(h,N));
@@ -49,36 +49,61 @@ Symbols=reshape(Bits3,K,1,Block_Num);
 nr=randn(N,1,Block_Num);
 ni=randn(N,1,Block_Num);
 Noise=(1/sqrt(SNR))*(sqrt(2)/2)*(nr+1i*ni);
-
 Symbols2=zeros(N,1,Block_Num);
-for a=1:Block_Num
-    Symbols2(:,:,a)=Df*IFFT*D*A*Tzp*Symbols(:,:,a)+Noise(:,:,a);
+
+if Mode==0
+    for a=1:Block_Num
+        Symbols2(:,:,a)=Df*IFFT*D*A*Tzp*Symbols(:,:,a)+Noise(:,:,a);
+    end
+else
+    for a=1:Block_Num
+        Symbols2(:,:,a)=Df*IFFT*D*Tzp*Symbols(:,:,a)+Noise(:,:,a);
+    end
 end
+
 %% Calculate Covariance Matrix 
 Ryy=zeros(N);
 for c=1:Block_Num
     Ryy=Ryy+Symbols2(:,:,c)*Symbols2(:,:,c)';
 end
 Ryy=Ryy/Block_Num;
-Ryy2=Df*IFFT*D*A*Tzp*eye(K)*Tzp'*A'*D'*FFT*Df';
+
 %% CFO Synchronization
 [U,V,W]=svd(IFFT*D*A*Tzp);
 J=zeros(201,1);
 Index=0;
-for w2=-1:0.01:1
-    Dff=zeros(N); 
-    for n=1:N
-        Dff(n,n)=exp(-1i*2*pi*w2*(n-1)/N);
+
+if Mode==0
+    for w2=-1:0.01:1
+        Dff=zeros(N); 
+        for n=1:N
+            Dff(n,n)=exp(-1i*2*pi*w2*(n-1)/N);
+        end
+        Index=Index+1;
+        for k=1:N-K
+            U1=U';
+            LNS=U1(N-k,:);
+            J(Index)=J(Index)+LNS*inv(Dff)*Ryy*Dff*LNS';
+        end
     end
-    Index=Index+1;
-    for k=1:N-K
-        U1=U';
-        LNS=U1(N-k,:);
-        J(Index)=J(Index)+LNS*inv(Dff)*Ryy*Dff*LNS';
+else
+    for w=-1:0.01:1
+        Dff=zeros(N); 
+        for n=1:N
+            Dff(n,n)=exp(-1i*2*pi*w*(n-1)/N);
+        end
+        Index=Index+1;
+        for k=K:N-1
+            f=zeros(N,1);
+            for a=1:N
+                f(a)=exp(1i*(a-1)*2*pi*k/N);
+            end
+            J(Index)=J(Index)+f'*inv(Dff)*Ryy*Dff*f;
+        end
     end
 end
 Index=find(J==min(J));
-Est_w=1-0.01*Index;
+Est_w=0.01*Index-1-0.01;
 %% CFO Compensation
 Dff=zeros(N); 
 for n=1:N
@@ -89,20 +114,26 @@ for count=1:Block_Num
     Symbols3(:,:,count)=Dff*Symbols2(:,:,count);
 end
 %% Equalization 
-Symbols5=zeros(size(Symbols));
+Symbols_5=zeros(size(Symbols));
 
-for count=1:Block_Num
-    Symbols5(:,:,count) = qam_sphere_decoder(IFFT*D*A*Tzp,Symbols3(:,:,count),M,Symbols(:,:,count),K);
+if Mode==0
+    for count=1:Block_Num
+        Symbols_5(:,:,count) = qam_sphere_decoder(IFFT*D*A*Tzp,Symbols2(:,:,count),M,Symbols(:,:,count),N);
+    end
+else
+    for count=1:Block_Num
+        Symbols_5(:,:,count) = qam_sphere_decoder(IFFT*D*Tzp,Symbols2(:,:,count),M,Symbols(:,:,count),N);
+    end
 end
 
 %% Demodulation
 if M==4
     Symbols6=qamdemod(Symbols5/sqrt(1/2),M);
 end
-Bitsre=zeros(1,K*Block_Num*log2(M));
+Bitsre=zeros(1,N*Block_Num*log2(M));
 start=1;
 for count=1:Block_Num
-    for k=1:K
+    for k=1:N
         dec=dec2bin(Symbols6(k,1,count),log2(M));
         for n=1:length(dec)
             Bitsre(start)=str2double(dec(n));
