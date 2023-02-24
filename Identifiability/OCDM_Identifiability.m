@@ -1,14 +1,17 @@
+% clear; clc; close all;
 function BER=OCDM_Identifiability(SNR,Mode)
 Block_Num=100; %Block Number
 M=4; %Constellation
 L=4; %Channel Order
-N=16; %Block Size
-K=15; %Actual Used Sub-carrier 
+N=5; %Block Size
+K=4; %Actual Used Sub-carrier 
 w=randi([-100,100])/100; %Normalized CFO
 c1=1/(2*N);
 c2=1/(2*N);
+Rss=1;
 % Mode=1;
-% SNR=10;
+% SNR=1000;
+
 %% Channel Generation
 h=(1/sqrt(2*L))*(randn(1,L)+1i*randn(1,L));
 D=diag(fft(h,N));
@@ -83,7 +86,7 @@ if Mode==0
         Index=Index+1;
         for k=1:N-K
             U1=U';
-            LNS=U1(N-k,:);
+            LNS=U1(N-k+1,:);
             J(Index)=J(Index)+LNS*inv(Dff)*Ryy*Dff*LNS';
         end
     end
@@ -104,7 +107,8 @@ else
     end
 end
 Index=find(J==min(J));
-Est_w=1-0.01*Index;
+Est_w=1-0.01*Index+0.01;
+
 %% CFO Compensation
 Dff=zeros(N); 
 for n=1:N
@@ -115,21 +119,21 @@ for count=1:Block_Num
     Symbols3(:,:,count)=Dff*Symbols2(:,:,count);
 end
 %% Equalization 
-Symbols_5=zeros(size(Symbols));
+Symbols5=zeros(size(Symbols));
 
 if Mode==0
     for count=1:Block_Num
-        Symbols_5(:,:,count) = qam_sphere_decoder(IFFT*D*A*Tzp,Symbols3(:,:,count),M,Symbols(:,:,count),K);
+        Symbols5(:,:,count) = ML_detector(Symbols3(:,:,count),M,IFFT*D*A*Tzp);
     end
 else
     for count=1:Block_Num
-        Symbols_5(:,:,count) = qam_sphere_decoder(IFFT*D*Tzp,Symbols3(:,:,count),M,Symbols(:,:,count),K);
+        Symbols5(:,:,count) = ML_detector(Symbols3(:,:,count),M,IFFT*D*Tzp);
     end
 end
 
 %% Demodulation
 if M==4
-    Symbols6=qamdemod(Symbols_5/sqrt(1/2),M);
+    Symbols6=qamdemod(Symbols5/sqrt(1/2),M);
 end
 Bitsre=zeros(1,K*Block_Num*log2(M));
 start=1;
